@@ -41,7 +41,13 @@ def hessian_f(x, y):
     return np.array([[g11, g12], [g12, g22]])
 
 
-# 
+# Armijo's method
+# x, y: current point
+# d: direction
+# grad: gradient at current point
+# max_step: maximum step size
+# beta: step size reduction factor
+# sigma: gradient "relief" factor
 def armijo(x, y, d, grad, max_step = 100, beta = 0.8, sigma = 0.1):
     f_xy = f(x, y)
     # grad = grad_f(x, y)
@@ -134,6 +140,9 @@ def newton_method(x, y, iter_limit):
     return x, y
 
 
+# DFP method
+# x, y: initial point
+# iter_limit: maximum number of iterations
 def dfp_method(x, y, iter_limit):
     # return x, y
     k = 0
