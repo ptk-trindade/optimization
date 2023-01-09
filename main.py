@@ -43,36 +43,24 @@ def hessian_f(x, y):
 
 # Armijo's method
 # x, y: current point
-# d: direction
+# d: direction vector
 # grad: gradient at current point
-# max_step: maximum step size
 # beta: step size reduction factor
 # sigma: gradient "relief" factor
-def armijo(x, y, d, grad, max_step = 100, beta = 0.8, sigma = 0.1):
+def armijo(x, y, d, grad, beta = 0.8, sigma = 0.3):
     f_xy = f(x, y)
-    # grad = grad_f(x, y)
-    # d = -(grad/np.linalg.norm(grad))
 
-    # print(f"grad:\n{grad} \n\n d:\n{d}")
     upper_limit = sigma*np.dot(d, grad)
 
-    # print("upper limit (should be negative): ", upper_limit)
-    step = max_step
     k = 1
-    min_step = 1/(10**16)
-    # print("f_xy:", f_xy, x, y)
-    while step > min_step and f(x + step*d[0], y + step*d[1]) > f_xy - step*upper_limit:
-        # print("f'_xy:", f(x + step*d[0], y + step*d[1]), x + step*d[0], y + step*d[1])
+    t = 1
+    while f(x + t*d[0], y + t*d[1]) > f_xy - t*upper_limit:
+        # print("f'_xy:", f(x + t*d[0], y + t*d[1]), x + t*d[0], y + t*d[1])
         # input()
-        step = beta*step
+        t = beta*t
         k += 1
 
-    if step <= min_step:
-        print("ERROR: Armijo did not converge")
-        print(f"iterations = {k}, beta = {beta}, sigma = {sigma}, step = {step}")
-        input("Press enter to continue...")
-
-    return step, k
+    return t, k
 
 
 
@@ -84,15 +72,15 @@ def gradient_descent(x, y, iter_limit):
     grad = grad_f(x, y)
     armijo_k = 0
     # print("x\ty")
-    while k < iter_limit and np.linalg.norm(grad) > 0.000001: # gradient magnitude > 0.0001
-        d = -(grad/np.linalg.norm(grad))    # d = -grad/|grad|
+    while k < iter_limit and np.linalg.norm(grad) > 1e-6: # gradient magnitude > 0.000001
+        d = -grad
         
-        step, arm_k = armijo(x, y, d, grad)
+        t, arm_k = armijo(x, y, d, grad)
 
         armijo_k += arm_k
 
-        x = x + step*d[0]
-        y = y + step*d[1]
+        x = x + t*d[0]
+        y = y + t*d[1]
         # print(x, y)
 
         grad = grad_f(x, y)
@@ -114,19 +102,18 @@ def newton_method(x, y, iter_limit):
     hes = hessian_f(x, y)
     armijo_k = 0
     # print("x\ty")
-    while k < iter_limit and np.linalg.norm(grad) > 0.00001: # gradient magnitude > 0.0001
+    while k < iter_limit and np.linalg.norm(grad) > 1e-6: # gradient magnitude > 0.000001
         d = np.linalg.solve(hes, grad) # d = H^-1 * grad
-        d = d/np.linalg.norm(d) # normalize d
         # print("d:", d)
 
         # print("x:", x, "y:", y, "d:", d, "grad:", grad)
-        step, arm_k = armijo(x, y, d, grad)
+        t, arm_k = armijo(x, y, d, grad)
         # print("arm_k:", arm_k)
         armijo_k += arm_k
         # print("step:", step)
         
-        x = x + step*d[0]
-        y = y + step*d[1]
+        x = x + t*d[0]
+        y = y + t*d[1]
         # print(x, y)
         
         grad = grad_f(x, y)
@@ -150,18 +137,17 @@ def dfp_method(x, y, iter_limit):
     hes = np.identity(2)
     armijo_k = 0
     # print("x\ty")
-    while k < iter_limit and np.linalg.norm(grad) > 0.00001: # gradient magnitude > 0.0001
+    while k < iter_limit and np.linalg.norm(grad) > 1e-6: # gradient magnitude > 0.000001
 
         d = np.dot(-hes, grad)
-        d = d/np.linalg.norm(d) # normalize d
-        step, arm_k = armijo(x, y, d, grad)
+        t, arm_k = armijo(x, y, d, grad)
         armijo_k += arm_k
 
         x_old = x
         y_old = y
 
-        x = x + step*d[0]
-        y = y + step*d[1]
+        x = x + t*d[0]
+        y = y + t*d[1]
 
         grad_old = grad
         grad = grad_f(x, y)
@@ -208,20 +194,20 @@ def main():
         if method == "1":
             print("Método do Gradiente:")
             print(f"Ponto inicial:\tf({x}, {y}) = {f(x, y)}")
-            x, y = gradient_descent(x, y, 10**6)
+            x, y = gradient_descent(x, y, 1e6)
             print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
 
         elif method == "2":
             print("Newton's method:")
             print(f"Ponto inicial:\tf({x}, {y}) = {f(x, y)}")
-            x, y = newton_method(x, y, 10**6)
+            x, y = newton_method(x, y, 1e6)
             print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
 
 
         elif method == "3":
             print("Quase Newton:")
             print(f"Ponto inicial:\tf({x}, {y}) = {f(x, y)}")
-            x, y = dfp_method(x, y, 10**6)
+            x, y = dfp_method(x, y, 1e6)
             print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
 
         elif method == "0":
