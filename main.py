@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 
 def dom(x, y):
     if x*y*(1-x)*(1-y) <= 0:
@@ -54,14 +54,11 @@ def armijo(x, y, d, grad, beta = 0.8, sigma = 0.3):
 
     k = 1
     t = 1
-    while f(x + t*d[0], y + t*d[1]) > f_xy - t*upper_limit:
-        # print("f'_xy:", f(x + t*d[0], y + t*d[1]), x + t*d[0], y + t*d[1])
-        # input()
+    while not dom(x + t*d[0], y + t*d[1]) or f(x + t*d[0], y + t*d[1]) > f_xy + t*upper_limit:
         t = beta*t
         k += 1
 
     return t, k
-
 
 
 # Gradient descent
@@ -74,13 +71,13 @@ def gradient_descent(x, y, iter_limit):
     # print("x\ty")
     while k < iter_limit and np.linalg.norm(grad) > 1e-6: # gradient magnitude > 0.000001
         d = -grad
-        
         t, arm_k = armijo(x, y, d, grad)
 
         armijo_k += arm_k
 
         x = x + t*d[0]
         y = y + t*d[1]
+        
         # print(x, y)
 
         grad = grad_f(x, y)
@@ -92,6 +89,7 @@ def gradient_descent(x, y, iter_limit):
 
     print(f"k: {k}, armijo_k: {armijo_k}")
     return x, y
+
 
 # Newton's method
 # x, y: initial point
@@ -131,14 +129,11 @@ def newton_method(x, y, iter_limit):
 # x, y: initial point
 # iter_limit: maximum number of iterations
 def dfp_method(x, y, iter_limit):
-    # return x, y
     k = 0
     grad = grad_old = grad_f(x, y)
     hes = np.identity(2)
     armijo_k = 0
-    # print("x\ty")
     while k < iter_limit and np.linalg.norm(grad) > 1e-6: # gradient magnitude > 0.000001
-
         d = np.dot(-hes, grad)
         t, arm_k = armijo(x, y, d, grad)
         armijo_k += arm_k
@@ -156,7 +151,7 @@ def dfp_method(x, y, iter_limit):
         q = grad - grad_old
 
         hes = hes + np.outer(p, p)/np.dot(p, q) - np.matmul(np.matmul(hes, np.outer(q, q)), hes)/np.dot(q, np.dot(hes, q))
-
+        k += 1
 
     if k == iter_limit:
         print("Newton's method did not converge")
@@ -203,7 +198,6 @@ def main():
             x, y = newton_method(x, y, 1e6)
             print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
 
-
         elif method == "3":
             print("Quase Newton:")
             print(f"Ponto inicial:\tf({x}, {y}) = {f(x, y)}")
@@ -218,4 +212,42 @@ def main():
             print("Invalid input")
 
 
-main()
+def tests():
+    pontos = [
+        (-17, 6),
+        (12, 21),
+        (-8, -3),
+        (5, -1),
+        (0.7, 0.6),
+    ]
+
+    print("Método do Gradiente:")
+    for p in pontos:
+        print(f"Ponto inicial:\tf({p[0]}, {p[1]}) = {f(p[0], p[1])}")
+        start_time = time.time()
+        x, y = gradient_descent(p[0], p[1], 1e6)
+        print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
+        print(f"Tempo de execução: {time.time() - start_time} segundos\n")
+
+    print("\n\nNewton's method:")
+    for p in pontos:
+        print(f"Ponto inicial:\tf({p[0]}, {p[1]}) = {f(p[0], p[1])}")
+        start_time = time.time()
+        x, y = newton_method(p[0], p[1], 1e6)
+        print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
+        print(f"Tempo de execução: {time.time() - start_time} segundos\n")
+
+    print("\n\nQuase Newton:")
+    for p in pontos:
+        print(f"Ponto inicial:\tf({p[0]}, {p[1]}) = {f(p[0], p[1])}")
+        start_time = time.time()
+        x, y = dfp_method(p[0], p[1], 1e6)
+        print(f"Minimo encontrado:\tf({x}, {y}) = {f(x, y)}")
+        print(f"Tempo de execução: {time.time() - start_time} segundos\n")
+
+    print(" ----- END ----- ")
+
+
+if __name__ == "__main__":
+    main()
+    # tests()
